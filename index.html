@@ -1,87 +1,881 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+    <title>AI Immersion Prompt Cookbook</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: #f6f8fb;
+        --foreground: #172033;
+        --card: #ffffff;
+        --muted: #edf2f7;
+        --muted-text: #5d687a;
+        --border: #dce4ee;
+        --primary: #0f67b1;
+        --primary-dark: #0a4e88;
+        --accent: #0e9bb8;
+        --success: #15803d;
+        --chatgpt: #209a75;
+        --gemini: #2563eb;
+        --claude: #ea6a16;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/12.13.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.13.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.13.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+      * {
+        box-sizing: border-box;
+      }
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--background);
+        color: var(--foreground);
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(16px);
+      }
+
+      .topbar-inner {
+        width: min(1600px, 100%);
+        margin: 0 auto;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        box-shadow: 0 10px 28px rgba(15, 103, 177, 0.24);
+      }
+
+      .brand-title {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.1;
+        font-weight: 750;
+        letter-spacing: 0;
+        white-space: nowrap;
+      }
+
+      .brand-subtitle {
+        margin: 2px 0 0;
+        color: var(--muted-text);
+        font-size: 12px;
+      }
+
+      .nav {
+        display: flex;
+        gap: 6px;
+        padding: 4px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--muted);
+      }
+
+      .nav button,
+      .tool-link,
+      .small-button,
+      .copy-button {
+        border: 1px solid transparent;
+        border-radius: 7px;
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+      }
+
+      .nav button {
+        padding: 7px 12px;
+        color: var(--muted-text);
+        background: transparent;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .nav button.active {
+        background: #fff;
+        color: var(--foreground);
+        border-color: var(--border);
+        box-shadow: 0 1px 2px rgba(19, 31, 48, 0.08);
+      }
+
+      .content {
+        width: min(1600px, 100%);
+        margin: 0 auto;
+        flex: 1;
+        padding: 16px;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .prompt-layout {
+        height: calc(100vh - 76px);
+        min-height: 640px;
+        display: grid;
+        grid-template-columns: minmax(360px, 45%) minmax(0, 1fr);
+        gap: 20px;
+      }
+
+      .framework-panel {
+        min-height: 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #05070b;
+        position: relative;
+        display: flex;
+      }
+
+      .framework-panel img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .expand {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 7px;
+        background: rgba(0, 0, 0, 0.62);
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .prompt-column {
+        min-width: 0;
+        min-height: 0;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .tools {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tool-link {
+        min-height: 32px;
+        padding: 7px 10px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .tool-link:hover,
+      .small-button:hover,
+      .copy-button:hover,
+      .tile:hover,
+      .challenge-card:hover {
+        transform: translateY(-1px);
+      }
+
+      .chatgpt {
+        background: var(--chatgpt);
+      }
+
+      .gemini {
+        background: var(--gemini);
+      }
+
+      .claude {
+        background: var(--claude);
+      }
+
+      .prompt-card,
+      .tile,
+      .challenge-card,
+      .report-card {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--card);
+        box-shadow: 0 1px 2px rgba(18, 32, 51, 0.04);
+      }
+
+      .prompt-card {
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .prompt-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(237, 242, 247, 0.7);
+      }
+
+      .step-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .step-number {
+        min-width: 29px;
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .step-name {
+        font-weight: 780;
+        font-size: 14px;
+      }
+
+      .copy-button,
+      .small-button {
+        padding: 6px 10px;
+        border-color: var(--border);
+        background: #fff;
+        color: var(--foreground);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .copy-button.copied {
+        color: var(--success);
+        border-color: rgba(21, 128, 61, 0.28);
+        background: rgba(21, 128, 61, 0.07);
+      }
+
+      .prompt-text {
+        margin: 0;
+        padding: 13px 14px 15px;
+        color: #293344;
+        font-size: 14px;
+        line-height: 1.62;
+        white-space: pre-line;
+      }
+
+      .hub {
+        min-height: calc(100vh - 110px);
+        display: grid;
+        place-items: center;
+        padding: 36px 0;
+      }
+
+      .tile-grid {
+        width: min(880px, 100%);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .tile {
+        position: relative;
+        min-height: 210px;
+        padding: 26px;
+        text-align: left;
+        cursor: pointer;
+        overflow: hidden;
+      }
+
+      .tile::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--accent));
+      }
+
+      .tile-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        margin-bottom: 20px;
+        color: var(--primary);
+        background: rgba(15, 103, 177, 0.1);
+        font-weight: 900;
+      }
+
+      .tile h2,
+      .report-card h2 {
+        margin: 0 0 9px;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .tile p,
+      .report-card p {
+        margin: 0;
+        color: var(--muted-text);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .challenge-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .challenge-card {
+        min-height: 132px;
+        position: relative;
+        padding: 18px;
+        cursor: pointer;
+      }
+
+      .challenge-card small {
+        display: block;
+        max-width: calc(100% - 72px);
+        color: #2c3546;
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 0.04em;
+      }
+
+      .challenge-card h3 {
+        margin: 10px 0 0;
+        color: var(--primary);
+        font-size: 15px;
+        line-height: 1.28;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .challenge-card .copy-button {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        min-height: 28px;
+      }
+
+      .report-layout {
+        min-height: calc(100vh - 110px);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .report-card {
+        padding: 24px;
+      }
+
+      .report-card ul {
+        margin: 18px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+        list-style: none;
+      }
+
+      .report-card li {
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fbfdff;
+        color: #344054;
+        font-size: 14px;
+      }
+
+      .side-panel {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--card);
+        padding: 16px;
+        position: sticky;
+        top: 78px;
+      }
+
+      .side-panel h3 {
+        margin: 0 0 12px;
+        font-size: 15px;
+      }
+
+      .side-panel .tool-link {
+        width: 100%;
+        margin-top: 8px;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        background: rgba(0, 0, 0, 0.88);
+        place-items: center;
+        padding: 20px;
+      }
+
+      .modal.active {
+        display: grid;
+      }
+
+      .modal img {
+        max-width: 96vw;
+        max-height: 92vh;
+        object-fit: contain;
+      }
+
+      .modal-card {
+        width: min(760px, 94vw);
+        max-height: 88vh;
+        overflow: auto;
+        border-radius: 8px;
+        background: #fff;
+        padding: 28px;
+      }
+
+      .modal-card small {
+        color: var(--muted-text);
+        text-transform: uppercase;
+        font-weight: 850;
+        letter-spacing: 0.04em;
+      }
+
+      .modal-card h2 {
+        margin: 8px 0 14px;
+        color: var(--primary);
+      }
+
+      .modal-card p {
+        color: #344054;
+        line-height: 1.65;
+      }
+
+      .close {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        width: 42px;
+        height: 42px;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        cursor: pointer;
+        font-size: 22px;
+      }
+
+      @media (max-width: 1100px) {
+        .prompt-layout,
+        .report-layout {
+          height: auto;
+          min-height: 0;
+          grid-template-columns: 1fr;
+        }
+
+        .framework-panel {
+          min-height: 420px;
+        }
+
+        .challenge-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .side-panel {
+          position: static;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .topbar-inner,
+        .section-head {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .nav,
+        .tools {
+          width: 100%;
+        }
+
+        .nav button,
+        .tool-link {
+          flex: 1;
+        }
+
+        .brand-title {
+          white-space: normal;
+        }
+
+        .content {
+          padding: 12px;
+        }
+
+        .framework-panel {
+          min-height: 260px;
+        }
+
+        .tile-grid,
+        .challenge-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .tile {
+          min-height: 180px;
+        }
       }
     </style>
   </head>
   <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
+    <div class="app">
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <div class="brand-mark">AI</div>
+            <div>
+              <h1 class="brand-title">AI Immersion Prompt Cookbook</h1>
+              <p class="brand-subtitle">From abstract ideas to working demos</p>
+            </div>
+          </div>
+          <nav class="nav" aria-label="Application views">
+            <button class="active" data-view-button="prompts">Prompts</button>
+            <button data-view-button="immersion">Immersion</button>
+            <button data-view-button="cards">Challenge Cards</button>
+            <button data-view-button="research">Research</button>
+          </nav>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="view active" id="view-prompts">
+          <div class="prompt-layout">
+            <div class="framework-panel">
+              <img src="framework.png" alt="AI immersion framework diagram">
+              <button class="expand" id="open-framework" title="Expand framework" aria-label="Expand framework">⛶</button>
+            </div>
+
+            <div class="prompt-column">
+              <div class="section-head">
+                <h2>Follow the 6-Step Framework</h2>
+                <div class="tools">
+                  <a class="tool-link chatgpt" href="https://chat.openai.com" target="_blank" rel="noopener noreferrer">Open ChatGPT</a>
+                  <a class="tool-link gemini" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">Open Gemini</a>
+                  <a class="tool-link claude" href="https://claude.ai" target="_blank" rel="noopener noreferrer">Open Claude</a>
+                </div>
+              </div>
+              <div id="prompt-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-immersion">
+          <div class="hub">
+            <div class="tile-grid">
+              <button class="tile" data-go="cards">
+                <div class="tile-icon">01</div>
+                <h2>Challenge Cards</h2>
+                <p>Explore business-group prompts that frame real-world problems, why they are hard, why GenAI helps, and what success should look like.</p>
+              </button>
+              <button class="tile" data-go="prompts">
+                <div class="tile-icon">02</div>
+                <h2>Prompts</h2>
+                <p>Use the Double Diamond workflow prompts to move from context, diagnosis, and ideation into a build-ready product prompt.</p>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" id="view-cards">
+          <div class="section-head">
+            <h2>Challenge Cards</h2>
+            <button class="small-button" data-go="prompts">Use Prompt Framework</button>
+          </div>
+          <div class="challenge-grid" id="challenge-list"></div>
+        </section>
+
+        <section class="view" id="view-research">
+          <div class="report-layout">
+            <article class="report-card">
+              <h2>Deep Research Brief</h2>
+              <p>Use this page as a lightweight stand-in for a PDF research report. The goal is to prime the AI with domain context before teams widen, diagnose, ideate, brief, and build.</p>
+              <ul>
+                <li>Start with the business challenge, the affected users, current process constraints, and the decision owners.</li>
+                <li>Ask for evidence-backed assumptions, not generic trend summaries.</li>
+                <li>Capture known risks: privacy, compliance, operational handoffs, model confidence, and fallback behaviour.</li>
+                <li>Translate the strongest idea into a pilot with measurable baseline, target uplift, and smallest integration surface.</li>
+              </ul>
+            </article>
+
+            <aside class="side-panel">
+              <h3>Launch AI Tool</h3>
+              <a class="tool-link chatgpt" href="https://chat.openai.com" target="_blank" rel="noopener noreferrer">Open ChatGPT</a>
+              <a class="tool-link gemini" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">Open Gemini</a>
+              <a class="tool-link claude" href="https://claude.ai" target="_blank" rel="noopener noreferrer">Open Claude</a>
+            </aside>
+          </div>
+        </section>
+      </main>
     </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
+
+    <div class="modal" id="framework-modal" aria-hidden="true">
+      <button class="close" data-close aria-label="Close">×</button>
+      <img src="framework.png" alt="AI immersion framework diagram fullscreen">
+    </div>
+
+    <div class="modal" id="card-modal" aria-hidden="true">
+      <button class="close" data-close aria-label="Close">×</button>
+      <article class="modal-card" id="card-detail"></article>
+    </div>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+      const prompts = [
+        {
+          step: 0,
+          label: "Learn",
+          text: "Here is a deep research report for the topic we are going to discuss today. No action required. Use this report as additional context for your responses apart from web search and other resources."
+        },
+        {
+          step: 1,
+          label: "Widen",
+          text: "Act as a research aide for the [selected challenge]. List key personas, top pains, current workarounds, and success metrics.\n\nReturn 5 insights and 3 risks tailored to this challenge context."
+        },
+        {
+          step: 2,
+          label: "Diagnose",
+          text: "Let's pick the [top pain-point] for this challenge. For this pain, run a Five Whys.\n\nPropose 3 root-cause hypotheses and the disproof evidence for each. Specify the minimum data cut and owners to pull.\n\nOutput a root-cause map, test plan, and privacy constraints."
+        },
+        {
+          step: 3,
+          label: "Ideate",
+          text: "Generate and cluster possible AI driven ideas into 3 options:\n1. Process: policy and ways of working\n2. Analytics/ML: forecast, optimise, recommend\n3. AI and Automation: computer vision, retrieval augmented generation, agentic AI, etc.\n\nScore each on Impact x Feasibility x Confidence x Time-to-Value. Recommend one pilot with the smallest integration surface and clearest value proof."
+        },
+        {
+          step: 4,
+          label: "Brief",
+          text: "For the recommended pilot, create a pilot brief including: target users, problem statement, success metrics and baselines, target uplift, key flow in 5-7 steps, screens/components, sample UI copy, representative sample data, integration points, and relevant guardrails such as regulation boundaries, bias tests, and fallback behaviour."
+        },
+        {
+          step: 5,
+          label: "Build",
+          text: "You are a product design expert. Using only the brief above, write a single [platform] product requirements prompt that includes product name, one-line description, who it is for, screens and key components, brand colors, main user flow, sample data, concise headlines and CTAs, UI instructions, success metric card, and constraints such as no PII. Return the [platform] prompt only."
+        }
+      ];
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+      const challenges = [
+        "ThinScore: Bureau-Free Credit for Invisible Millions",
+        "Farm-to-Fork-to-Finance Agritech Credit",
+        "Real-Time Voice Translator",
+        "Automated Household Conversion",
+        "Scam to Closure: Agentic Victim Resolution",
+        "AI Procurement Intelligence",
+        "Post-Merger Customer Experience Still Feels Like Two Companies",
+        "Network Incidents Take Too Long to Detect, Diagnose and Resolve",
+        "Fraud and Scam Losses Outpace Control Updates",
+        "Retail Demand and Waste Decisions Happen in Fragmented Loops",
+        "Enterprise Sales Cycles Stall Translating Customer Pain into Solutions",
+        "Workforce AI Training Is Happening but Cycle-Time Gains Are Unmeasured"
+      ];
+
+      const promptList = document.querySelector("#prompt-list");
+      const challengeList = document.querySelector("#challenge-list");
+      const frameworkModal = document.querySelector("#framework-modal");
+      const cardModal = document.querySelector("#card-modal");
+      const cardDetail = document.querySelector("#card-detail");
+
+      async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      function writeClipboard(text, button) {
+        copyText(text).then(() => {
+          const previous = button.textContent;
+          button.textContent = "Copied";
+          button.classList.add("copied");
+          window.setTimeout(() => {
+            button.textContent = previous;
+            button.classList.remove("copied");
+          }, 1600);
+        }).catch(() => {
+          const previous = button.textContent;
+          button.textContent = "Copy failed";
+          window.setTimeout(() => {
+            button.textContent = previous;
+          }, 1600);
+        });
+      }
+
+      function showView(viewName) {
+        document.querySelectorAll(".view").forEach((view) => {
+          view.classList.toggle("active", view.id === `view-${viewName}`);
+        });
+        document.querySelectorAll("[data-view-button]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.viewButton === viewName);
+        });
+      }
+
+      prompts.forEach((prompt) => {
+        const card = document.createElement("article");
+        card.className = "prompt-card";
+        card.innerHTML = `
+          <div class="prompt-card-header">
+            <div class="step-label">
+              <span class="step-number">${prompt.step}</span>
+              <span class="step-name">${prompt.label}</span>
+            </div>
+            <button class="copy-button" type="button">Copy</button>
+          </div>
+          <p class="prompt-text"></p>
+        `;
+        card.querySelector(".prompt-text").textContent = prompt.text;
+        card.querySelector(".copy-button").addEventListener("click", (event) => {
+          writeClipboard(prompt.text, event.currentTarget);
+        });
+        promptList.appendChild(card);
+      });
+
+      challenges.forEach((name, index) => {
+        const card = document.createElement("article");
+        card.className = "challenge-card";
+        card.innerHTML = `
+          <button class="copy-button" type="button">Copy</button>
+          <small>Challenge Card ${index + 1}</small>
+          <h3>${name}</h3>
+        `;
+        card.addEventListener("click", () => {
+          cardDetail.innerHTML = `
+            <small>Challenge Card ${index + 1}</small>
+            <h2>${name}</h2>
+            <p><strong>Problem frame:</strong> Teams need to understand the user pain, operational friction, data available, and measurable success criteria before choosing a GenAI intervention.</p>
+            <p><strong>Prompt starter:</strong> Act as a research aide for "${name}". Identify personas, pains, workarounds, risks, and the smallest pilot that can prove business value.</p>
+          `;
+          cardModal.classList.add("active");
+          cardModal.setAttribute("aria-hidden", "false");
+        });
+        card.querySelector(".copy-button").addEventListener("click", (event) => {
+          event.stopPropagation();
+          writeClipboard(name, event.currentTarget);
+        });
+        challengeList.appendChild(card);
+      });
+
+      document.querySelectorAll("[data-view-button]").forEach((button) => {
+        button.addEventListener("click", () => showView(button.dataset.viewButton));
+      });
+
+      document.querySelectorAll("[data-go]").forEach((button) => {
+        button.addEventListener("click", () => showView(button.dataset.go));
+      });
+
+      document.querySelector("#open-framework").addEventListener("click", () => {
+        frameworkModal.classList.add("active");
+        frameworkModal.setAttribute("aria-hidden", "false");
+      });
+
+      document.querySelectorAll("[data-close]").forEach((button) => {
+        button.addEventListener("click", () => {
+          frameworkModal.classList.remove("active");
+          cardModal.classList.remove("active");
+          frameworkModal.setAttribute("aria-hidden", "true");
+          cardModal.setAttribute("aria-hidden", "true");
+        });
+      });
+
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (event) => {
+          if (event.target === modal) {
+            modal.classList.remove("active");
+            modal.setAttribute("aria-hidden", "true");
+          }
+        });
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          frameworkModal.classList.remove("active");
+          cardModal.classList.remove("active");
+          frameworkModal.setAttribute("aria-hidden", "true");
+          cardModal.setAttribute("aria-hidden", "true");
         }
       });
     </script>
