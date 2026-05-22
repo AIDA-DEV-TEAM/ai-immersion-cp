@@ -454,6 +454,40 @@
         font-size: 14px;
       }
 
+      .deep-research-prompt {
+        position: relative;
+        margin-top: 18px;
+        max-width: 760px;
+        padding: 18px;
+        border: 2px solid rgba(15, 103, 177, 0.58);
+        border-radius: 8px;
+        background: #fbfdff;
+        color: #344054;
+      }
+
+      .deep-research-prompt .copy-button {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+      }
+
+      .deep-research-prompt h3 {
+        margin: 0 0 12px;
+        padding-right: 72px;
+        color: var(--primary);
+        font-size: 16px;
+      }
+
+      .deep-research-prompt p {
+        color: #344054;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .deep-research-prompt p + p {
+        margin-top: 10px;
+      }
+
       .side-panel {
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -606,16 +640,38 @@
             </div>
           </div>
           <nav class="nav" aria-label="Application views">
-            <button class="active" data-view-button="prompts">Prompts</button>
-            <button data-view-button="immersion">Immersion</button>
+            <button class="active" data-view-button="research">Deep Research</button>
+            <button data-view-button="prompts">Prompts</button>
             <button data-view-button="cards">Challenge Cards</button>
-            <button data-view-button="research">Research</button>
           </nav>
         </div>
       </header>
 
       <main class="content">
-        <section class="view active" id="view-prompts">
+        <section class="view active" id="view-research">
+          <div class="report-layout">
+            <article class="report-card">
+              <h2>First, Frame the Deep Research Prompt</h2>
+              <p><em>(Outside-in + Context)</em></p>
+              <p>Find out more about your company than ever before, without the need of consultants, market reports or SMEs. You no longer need to be an expert researcher; all you need is context mining.</p>
+              <div class="deep-research-prompt">
+                <button class="copy-button" id="copy-deep-research" type="button">Copy</button>
+                <h3>Prompt:</h3>
+                <p id="deep-research-prompt-copy">I am part of the [Department/Business unit] at [organization name]. I want to conduct deep research for my department. Help me compose a deep research prompt which will help me get a sense of the customer and company snapshot, the AI investments, the broader challenges and AI opportunities for the company. I want the report to be tailored to my specific needs. Here is some context specific to me: [Participants add more context/information specific to their domain]</p>
+                <p><strong><em id="deep-research-prompt-instruction">Just return the prompt don't run the research.</em></strong></p>
+              </div>
+            </article>
+
+            <aside class="side-panel">
+              <h3>Launch AI Tool</h3>
+              <a class="tool-link chatgpt" href="https://chat.openai.com" target="_blank" rel="noopener noreferrer">Open ChatGPT</a>
+              <a class="tool-link gemini" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">Open Gemini</a>
+              <a class="tool-link claude" href="https://claude.ai" target="_blank" rel="noopener noreferrer">Open Claude</a>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="view-prompts">
           <div class="prompt-layout">
             <div class="framework-panel">
               <img src="framework.png" alt="AI immersion framework diagram">
@@ -636,23 +692,6 @@
           </div>
         </section>
 
-        <section class="view" id="view-immersion">
-          <div class="hub">
-            <div class="tile-grid">
-              <button class="tile" data-go="cards">
-                <div class="tile-icon">01</div>
-                <h2>Challenge Cards</h2>
-                <p>Explore business-group prompts that frame real-world problems, why they are hard, why GenAI helps, and what success should look like.</p>
-              </button>
-              <button class="tile" data-go="prompts">
-                <div class="tile-icon">02</div>
-                <h2>Prompts</h2>
-                <p>Use the Double Diamond workflow prompts to move from context, diagnosis, and ideation into a build-ready product prompt.</p>
-              </button>
-            </div>
-          </div>
-        </section>
-
         <section class="view" id="view-cards">
           <div class="section-head">
             <h2>Challenge Cards</h2>
@@ -661,27 +700,6 @@
           <div class="challenge-grid" id="challenge-list"></div>
         </section>
 
-        <section class="view" id="view-research">
-          <div class="report-layout">
-            <article class="report-card">
-              <h2>Deep Research Brief</h2>
-              <p>Use this page as a lightweight stand-in for a PDF research report. The goal is to prime the AI with domain context before teams widen, diagnose, ideate, brief, and build.</p>
-              <ul>
-                <li>Start with the business challenge, the affected users, current process constraints, and the decision owners.</li>
-                <li>Ask for evidence-backed assumptions, not generic trend summaries.</li>
-                <li>Capture known risks: privacy, compliance, operational handoffs, model confidence, and fallback behaviour.</li>
-                <li>Translate the strongest idea into a pilot with measurable baseline, target uplift, and smallest integration surface.</li>
-              </ul>
-            </article>
-
-            <aside class="side-panel">
-              <h3>Launch AI Tool</h3>
-              <a class="tool-link chatgpt" href="https://chat.openai.com" target="_blank" rel="noopener noreferrer">Open ChatGPT</a>
-              <a class="tool-link gemini" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">Open Gemini</a>
-              <a class="tool-link claude" href="https://claude.ai" target="_blank" rel="noopener noreferrer">Open Claude</a>
-            </aside>
-          </div>
-        </section>
       </main>
     </div>
 
@@ -749,6 +767,7 @@
       const frameworkModal = document.querySelector("#framework-modal");
       const cardModal = document.querySelector("#card-modal");
       const cardDetail = document.querySelector("#card-detail");
+      const deepResearchPrompt = `${document.querySelector("#deep-research-prompt-copy").textContent}\n\n${document.querySelector("#deep-research-prompt-instruction").textContent}`;
 
       async function copyText(text) {
         if (navigator.clipboard && window.isSecureContext) {
@@ -845,6 +864,10 @@
 
       document.querySelectorAll("[data-go]").forEach((button) => {
         button.addEventListener("click", () => showView(button.dataset.go));
+      });
+
+      document.querySelector("#copy-deep-research").addEventListener("click", (event) => {
+        writeClipboard(deepResearchPrompt, event.currentTarget);
       });
 
       document.querySelector("#open-framework").addEventListener("click", () => {
