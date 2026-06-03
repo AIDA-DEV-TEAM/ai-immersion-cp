@@ -30,8 +30,21 @@ export function useChatStream() {
 
     try {
       let assembled = ''
-      for await (const token of streamChat(sessionId, text)) {
-        assembled += token
+      for await (const event of streamChat(sessionId, text)) {
+        if (event.type === 'blocked') {
+          // Guardrail redirect: render a notice, not a facilitator reply, and stop.
+          setState((prev) => ({
+            ...prev,
+            messages: [
+              ...prev.messages,
+              { role: 'assistant', content: event.message, redirect: true },
+            ],
+            streamingContent: null,
+            isStreaming: false,
+          }))
+          return
+        }
+        assembled += event.value
         setState((prev) => ({ ...prev, streamingContent: assembled }))
       }
       setState((prev) => ({

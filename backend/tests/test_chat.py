@@ -7,7 +7,8 @@ from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.main import app
-from app.services import chat_service, session_store
+from app.schemas.guardrail import GuardrailVerdict
+from app.services import chat_service, guardrail_service, session_store
 
 _REPLY_TOKENS = ["Hello", " there"]
 _REPLY = "".join(_REPLY_TOKENS)
@@ -35,6 +36,14 @@ class _FakeModel:
 def fake_model(monkeypatch: pytest.MonkeyPatch) -> _FakeModel:
     fake = _FakeModel()
     monkeypatch.setattr(chat_service, "get_chat_model", lambda: fake)
+
+    # The chat route runs the guardrail pre-check first; stub it to allow so these
+    # tests stay deterministic and network-free (the guardrail itself is covered
+    # in test_guardrail.py).
+    async def _allow(_message: str, _step: str) -> GuardrailVerdict:
+        return GuardrailVerdict(allow=True, reason="test-allow")
+
+    monkeypatch.setattr(guardrail_service, "classify", _allow)
     session_store._sessions.clear()
     return fake
 

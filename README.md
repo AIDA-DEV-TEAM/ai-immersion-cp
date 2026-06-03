@@ -7,9 +7,9 @@ general assistant. It walks a participant through turning a real business
 challenge into a concrete, buildable AI pilot concept, then declines anything
 outside that process.
 
-> **Status:** Phase 1 — branded chat skeleton running end-to-end on the free
-> NVIDIA NIM tier. Later phases (guardrail, reasoning display, production
-> provider swap, polish) are tracked separately and not yet built.
+> **Status:** Phase 2 — branded chat skeleton (Phase 1) plus the guardrail
+> input pre-check, running end-to-end on the free NVIDIA NIM tier. Later phases
+> (reasoning display, production provider swap, polish) are not yet built.
 
 ---
 
@@ -110,13 +110,14 @@ uvicorn app.main:app --reload --port 8000
 PROVIDER_BASE_URL=https://integrate.api.nvidia.com/v1
 PROVIDER_MODEL=meta/llama-3.3-70b-instruct   # use the exact id from the model's page
 PROVIDER_API_KEY=nvapi-...                    # your key
+GUARDRAIL_MODEL=meta/llama-3.1-70b-instruct  # pre-check model; can be smaller/faster
 BRAND_NAME=Acme
 BRAND_VOICE=warm, plain-spoken, professional
 CORS_ORIGINS=http://localhost:5173
 ```
 
-> Run **single-worker** in Phase 1: the session store is in-memory and not
-> multi-worker safe. `--reload` wipes sessions on restart (expected).
+> Run **single-worker**: the session store is in-memory and not multi-worker
+> safe. `--reload` wipes sessions on restart (expected).
 
 ### 2. Frontend
 
@@ -142,6 +143,13 @@ cd frontend && npm run test
 npm run type-check
 ```
 
+The guardrail's labeled eval (real-model, requires a key) is excluded from the
+default run. Validate the false-positive rate explicitly with:
+
+```bash
+cd backend && pytest -m eval -s
+```
+
 ---
 
 ## Configuration reference
@@ -149,8 +157,9 @@ npm run type-check
 | Variable (backend `.env`) | Purpose | Default |
 |---------------------------|---------|---------|
 | `PROVIDER_BASE_URL` | OpenAI-compatible endpoint | NVIDIA NIM |
-| `PROVIDER_MODEL` | Model id (config string — swap in one line) | `meta/llama-3.1-70b-instruct` |
+| `PROVIDER_MODEL` | Facilitator model id (config string — swap in one line) | `meta/llama-3.1-70b-instruct` |
 | `PROVIDER_API_KEY` | Provider key (held server-side only) | — |
+| `GUARDRAIL_MODEL` | Pre-check classifier model (reuses base_url + key) | `meta/llama-3.1-70b-instruct` |
 | `BRAND_NAME` / `BRAND_VOICE` | Build-time branding in the system prompt | `Acme` / … |
 | `CORS_ORIGINS` | Comma-separated allow-list (never `*`) | `http://localhost:5173` |
 
@@ -160,9 +169,16 @@ npm run type-check
 
 - The model **declines off-process requests** — this is a workshop facilitation
   tool, not a general assistant.
+- **Guardrail (3 layers):** the StepRail UI anchors the current step (1), the
+  system prompt scopes the facilitator (2), and a cheap model-based **input
+  pre-check** hard-stops unambiguous off-process abuse before the main call (3).
+  The pre-check **biases hard toward allowing** — a false positive kills a session,
+  a false negative is caught by the facilitator in the room — and **fails open**
+  (any classifier error allows the turn). On a block it returns a redirect notice
+  anchored to the current step; the main model is never called.
 - Manual `[bracket]` placeholders are deliberate — they are how participants
   inject their own context, and are never auto-filled.
 - Guardrail tuning does **not** transfer between engines; it must be re-validated
-  on the production model before live use.
+  (run the labeled eval, `pytest -m eval`) on the production model before live use.
 - The NVIDIA NIM free tier (~40 req/min, no SLA) is a prototyping bench only —
   not for live customer workshops.

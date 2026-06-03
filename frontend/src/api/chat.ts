@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/client'
-import type { SessionResponse } from '@/types/api'
+import type { SessionResponse, StreamEvent } from '@/types/api'
 
 export async function createSession(): Promise<SessionResponse> {
   const { data } = await apiClient.post<SessionResponse>('/session')
@@ -15,17 +15,18 @@ export async function updateStep(sessionId: string, stepIndex: number): Promise<
 }
 
 /**
- * Stream one chat turn. Yields assistant text tokens as they arrive.
+ * Stream one chat turn. Yields `StreamEvent`s as they arrive.
  *
  * Uses `fetch` + a ReadableStream reader (not React Query / axios) because token
- * streaming over SSE isn't React Query's model. Each SSE frame is JSON: either
- * `{ token }` or `{ done: true }`.
+ * streaming over SSE isn't React Query's model. Each SSE frame is JSON: a
+ * `{ token }` (allowed turn), a `{ blocked, message }` (guardrail redirect), or
+ * `{ done: true }`.
  */
 export async function* streamChat(
   sessionId: string,
   message: string,
   signal?: AbortSignal,
-): AsyncGenerator<string> {
+): AsyncGenerator<StreamEvent> {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -53,8 +54,11 @@ export async function* streamChat(
     for (const frame of frames) {
       const line = frame.trim()
       if (!line.startsWith('data: ')) continue
-      const payload: { token?: string; done?: boolean } = JSON.parse(line.slice('data: '.length))
-      if (payload.token) yield payload.token
+      const payload: { token?: string; blocked?: boolean; message?: string; done?: boolean } =
+        JSON.parse(line.slice('data: '.length))
+      if (payload.token) yield { type: 'token', value: payload.token }
+      else if (payload.blocked && payload.message)
+        yield { type: 'blocked', message: payload.message }
     }
   }
 }

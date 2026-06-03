@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     provider_model: str = Field(default="meta/llama-3.1-70b-instruct")
     provider_api_key: str = Field(default="")
 
+    # Guardrail pre-check model. Its own config string so prod can pick a
+    # cheaper/faster model than the facilitator; reuses provider_base_url + key.
+    # Defaults to the facilitator model (a known-good id) because a smaller id
+    # could not be confirmed available on the free tier — point this at a smaller
+    # model (e.g. an 8b instruct) once you've verified it on your key.
+    guardrail_model: str = Field(default="meta/llama-3.1-70b-instruct")
+
     # Build-time branding, substituted into the system prompt.
     brand_name: str = Field(default="Acme")
     brand_voice: str = Field(default="warm, plain-spoken, professional")

@@ -21,3 +21,19 @@ def get_chat_model() -> ChatOpenAI:
         api_key=settings.provider_api_key,
         streaming=True,
     )
+
+
+@lru_cache
+def get_guardrail_model() -> ChatOpenAI:
+    """Build the guardrail pre-check model (non-streaming, its own model id).
+
+    Reuses the provider's base_url/key but with `guardrail_model`, so prod can run
+    the cheap classifier on a faster/cheaper model than the facilitator.
+    """
+    settings = get_settings()
+    return ChatOpenAI(
+        base_url=settings.provider_base_url,
+        model=settings.guardrail_model,
+        api_key=settings.provider_api_key,
+        streaming=False,
+    )

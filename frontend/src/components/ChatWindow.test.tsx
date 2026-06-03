@@ -4,8 +4,10 @@ import userEvent from '@testing-library/user-event'
 import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { streamChat } from '@/api/chat'
 import { ChatWindow } from '@/components/ChatWindow'
 import { STEP_TEMPLATES } from '@/data/stepTemplates'
+import type { StreamEvent } from '@/types/api'
 
 // Mock the API layer — the smoke test exercises the UI, not the network.
 vi.mock('@/api/chat', () => ({
@@ -13,6 +15,10 @@ vi.mock('@/api/chat', () => ({
   updateStep: vi.fn(async () => ({ session_id: 'test-session', step_index: 0 })),
   streamChat: vi.fn(),
 }))
+
+async function* streamOf(...events: StreamEvent[]): AsyncGenerator<StreamEvent> {
+  for (const event of events) yield event
+}
 
 function renderWithClient(ui: ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -43,5 +49,22 @@ describe('ChatWindow', () => {
     await waitFor(() => {
       expect(textarea).toHaveValue(STEP_TEMPLATES[0].template)
     })
+  })
+
+  it('renders a guardrail block as a distinct redirect notice, not a chat bubble', async () => {
+    const user = userEvent.setup()
+    vi.mocked(streamChat).mockReturnValue(
+      streamOf({ type: 'blocked', message: "That's outside what this session covers — Frame step." }),
+    )
+    renderWithClient(<ChatWindow />)
+
+    await user.click(screen.getByRole('button', { name: /begin session/i }))
+    const textarea = await screen.findByLabelText(/your message/i)
+    await user.type(textarea, 'what is the capital of France?')
+    await user.click(screen.getByRole('button', { name: /^send$/i }))
+
+    // The redirect is shown via a role="status" notice referencing the step.
+    const notice = await screen.findByRole('status')
+    expect(notice).toHaveTextContent(/Frame step/i)
   })
 })

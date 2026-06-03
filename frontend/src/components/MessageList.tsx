@@ -1,4 +1,5 @@
 import { MessageBubble } from '@/components/MessageBubble'
+import { RedirectNotice } from '@/components/RedirectNotice'
 import type { Message } from '@/types/api'
 
 interface MessageListProps {
@@ -32,9 +33,13 @@ export function MessageList({
         </div>
       )}
 
-      {messages.map((message, index) => (
-        <MessageBubble key={index} role={message.role} content={message.content} />
-      ))}
+      {messages.map((message, index) =>
+        message.redirect ? (
+          <RedirectNotice key={index} message={message.content} />
+        ) : (
+          <MessageBubble key={index} role={message.role} content={message.content} />
+        ),
+      )}
 
       {streamingContent !== null && (
         <MessageBubble role="assistant" content={streamingContent} streaming={isStreaming} />

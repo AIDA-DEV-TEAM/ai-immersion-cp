@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from app.schemas.chat import ChatRequest, SessionResponse, StepUpdateRequest
-from app.services import chat_service, session_store
+from app.services import chat_service, guardrail_service, session_store
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -26,10 +26,29 @@ async def _sse_events(session_id: str, message: str) -> AsyncIterator[str]:
     yield f"data: {json.dumps({'done': True})}\n\n"
 
 
+async def _blocked_events(message: str) -> AsyncIterator[str]:
+    # Guardrail short-circuit: emit one redirect frame, then done. The main model
+    # is never called and the session thread is left untouched.
+    yield f"data: {json.dumps({'blocked': True, 'message': message})}\n\n"
+    yield f"data: {json.dumps({'done': True})}\n\n"
+
+
 @router.post("/chat")
 async def chat(request: ChatRequest) -> StreamingResponse:
-    if session_store.get_session(request.session_id) is None:
+    session = session_store.get_session(request.session_id)
+    if session is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
+    # Layer 3 pre-check: classify before any facilitator call. On block, short-circuit.
+    verdict = await guardrail_service.classify(
+        request.message, guardrail_service.step_name(session.step_index)
+    )
+    if not verdict.allow:
+        return StreamingResponse(
+            _blocked_events(guardrail_service.redirect_text(session.step_index)),
+            media_type="text/event-stream",
+        )
+
     return StreamingResponse(
         _sse_events(request.session_id, request.message),
         media_type="text/event-stream",
