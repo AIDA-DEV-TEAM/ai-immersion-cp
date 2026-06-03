@@ -1,0 +1,47 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import type { ReactElement } from 'react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { ChatWindow } from '@/components/ChatWindow'
+import { STEP_TEMPLATES } from '@/data/stepTemplates'
+
+// Mock the API layer — the smoke test exercises the UI, not the network.
+vi.mock('@/api/chat', () => ({
+  createSession: vi.fn(async () => ({ session_id: 'test-session', step_index: 0 })),
+  updateStep: vi.fn(async () => ({ session_id: 'test-session', step_index: 0 })),
+  streamChat: vi.fn(),
+}))
+
+function renderWithClient(ui: ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
+}
+
+describe('ChatWindow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('renders the start screen before a session exists', () => {
+    renderWithClient(<ChatWindow />)
+    expect(screen.getByRole('button', { name: /begin session/i })).toBeInTheDocument()
+  })
+
+  it('inserts the current step template verbatim into the composer', async () => {
+    const user = userEvent.setup()
+    renderWithClient(<ChatWindow />)
+
+    await user.click(screen.getByRole('button', { name: /begin session/i }))
+
+    // Once the session starts, the Frame step composer appears.
+    const insertButton = await screen.findByRole('button', { name: /insert frame template/i })
+    await user.click(insertButton)
+
+    const textarea = screen.getByLabelText(/your message/i)
+    await waitFor(() => {
+      expect(textarea).toHaveValue(STEP_TEMPLATES[0].template)
+    })
+  })
+})
