@@ -1,5 +1,7 @@
 import { MessageBubble } from '@/components/MessageBubble'
 import { RedirectNotice } from '@/components/RedirectNotice'
+import { ThinkingIndicator } from '@/components/ThinkingIndicator'
+import { useAutoScroll } from '@/hooks/useAutoScroll'
 import type { Message } from '@/types/api'
 
 interface MessageListProps {
@@ -18,41 +20,48 @@ export function MessageList({
   currentStepName,
 }: MessageListProps) {
   const isEmpty = messages.length === 0 && streamingContent === null
+  // Tokens arrive on `streamingContent`; before the first one it is the empty string.
+  const isThinking = isStreaming && streamingContent === ''
+  const { ref, onScroll } = useAutoScroll<HTMLDivElement>(
+    `${messages.length}:${streamingContent ?? ''}:${error ?? ''}`,
+  )
 
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
-      {isEmpty && (
-        <div className="m-auto max-w-md text-center text-gray-500">
-          <p className="text-base font-medium text-gray-700">
-            You're on the {currentStepName} step.
-          </p>
-          <p className="mt-2 text-sm">
-            Insert the step template below, fill in the bracketed blanks with your own context,
-            and send to begin.
-          </p>
-        </div>
-      )}
+    <div ref={ref} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6 md:px-6">
+        {isEmpty && (
+          <div className="m-auto max-w-md py-12 text-center">
+            <p className="text-base font-medium text-fg">You're on the {currentStepName} step.</p>
+            <p className="mt-2 text-sm leading-relaxed text-fg-muted">
+              Insert the step template below, fill in the bracketed blanks with your own context, and
+              send to begin.
+            </p>
+          </div>
+        )}
 
-      {messages.map((message, index) =>
-        message.redirect ? (
-          <RedirectNotice key={index} message={message.content} />
-        ) : (
-          <MessageBubble key={index} role={message.role} content={message.content} />
-        ),
-      )}
+        {messages.map((message, index) =>
+          message.redirect ? (
+            <RedirectNotice key={index} message={message.content} />
+          ) : (
+            <MessageBubble key={index} role={message.role} content={message.content} />
+          ),
+        )}
 
-      {streamingContent !== null && (
-        <MessageBubble role="assistant" content={streamingContent} streaming={isStreaming} />
-      )}
+        {isThinking && <ThinkingIndicator />}
 
-      {error && (
-        <div
-          role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-        >
-          {error}
-        </div>
-      )}
+        {streamingContent !== null && streamingContent !== '' && (
+          <MessageBubble role="assistant" content={streamingContent} streaming={isStreaming} />
+        )}
+
+        {error && (
+          <div
+            role="alert"
+            className="rounded-lg border border-danger/30 bg-danger-surface px-4 py-3 text-sm text-danger"
+          >
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

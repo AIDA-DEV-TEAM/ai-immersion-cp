@@ -9,7 +9,7 @@ export function RedirectNotice({ message }: RedirectNoticeProps) {
     <div className="flex justify-center px-4">
       <div
         role="status"
-        className="flex max-w-md items-start gap-2 rounded-lg border border-surface-border bg-surface-muted px-4 py-3 text-center text-sm text-gray-500"
+        className="flex max-w-md items-start gap-2 rounded-lg border border-border bg-surface-muted px-4 py-3 text-center text-sm text-fg-muted"
       >
         <span aria-hidden="true" className="mt-0.5 shrink-0">
           ⟲

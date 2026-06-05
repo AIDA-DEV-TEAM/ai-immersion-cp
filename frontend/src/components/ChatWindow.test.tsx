@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { streamChat } from '@/api/chat'
 import { ChatWindow } from '@/components/ChatWindow'
+import { DUMMY_DATA_REMINDER } from '@/components/DummyDataReminder'
 import { STEP_TEMPLATES } from '@/data/stepTemplates'
 import type { StreamEvent } from '@/types/api'
 
@@ -49,6 +50,17 @@ describe('ChatWindow', () => {
     await waitFor(() => {
       expect(textarea).toHaveValue(STEP_TEMPLATES[0].template)
     })
+  })
+
+  it('shows the persistent dummy-data reminder in the composer area', async () => {
+    const user = userEvent.setup()
+    renderWithClient(<ChatWindow />)
+
+    await user.click(screen.getByRole('button', { name: /begin session/i }))
+
+    // The reminder lives inside the composer form and is non-dismissible.
+    const composer = await screen.findByRole('form', { name: /message composer/i })
+    expect(within(composer).getByText(DUMMY_DATA_REMINDER)).toBeInTheDocument()
   })
 
   it('renders a guardrail block as a distinct redirect notice, not a chat bubble', async () => {
