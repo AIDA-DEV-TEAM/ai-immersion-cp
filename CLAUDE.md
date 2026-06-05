@@ -73,9 +73,10 @@ engines must be a config change, not a code change.
   (raisable to ~200 on request). This is a prototyping bench **only** — it has
   no SLA and is not for live/customer-facing use. Do not run a real workshop
   on it.
-- **PROD engine: Gemini or OpenAI** via the same interface (Gemini through its
-  OpenAI-compatibility layer or one thin adapter). The production provider
-  decision is made outside the code; the code must not assume which.
+- **PROD engine: OpenAI** (decided in Phase 4 — Gemini is no longer in play),
+  reached through the same OpenAI Chat Completions interface, so the swap stays a
+  `base_url` + `model` + key config change, not a code change. The code must not
+  hardcode the provider; OpenAI is the configured target, not a code assumption.
 - NIM models can be **deprecated with a few days' notice** → keep the model
   name a config string so swapping is one line.
 
@@ -85,9 +86,9 @@ This project uses **LangChain**. Use `langchain_openai.ChatOpenAI` pointed at
 the provider's `base_url` — **not** `ChatNVIDIA`, and **not** the raw `openai`
 SDK. The same `ChatOpenAI` class then covers every engine: in dev, point
 `base_url` at NIM (`https://integrate.api.nvidia.com/v1`, `nvapi-` key); the
-prod swap is a `base_url` + `model` change to OpenAI directly, or to Gemini's
-OpenAI-compatibility layer. This keeps engine-swapping a config change, not a
-code change, and avoids coupling to a provider-specific class.
+prod swap is a `base_url` + `model` change to OpenAI directly. This keeps
+engine-swapping a config change, not a code change, and avoids coupling to a
+provider-specific class.
 
 - Pass the full thread as the message list on every `.stream()` call — don't
   rely on any LangChain memory abstraction; the thread *is* the state.
@@ -135,17 +136,51 @@ code change, and avoids coupling to a provider-specific class.
 Use plan mode to propose the approach before writing code. Commit between
 phases.
 
-1. **Branded chat skeleton on NVIDIA.** Frontend, proxy, env-driven provider
-   config, streaming, the system prompt, the six step templates with manual
-   placeholders, one persistent session thread. Runs end-to-end on the free tier.
-2. **Guardrail.** The input pre-check + permissive scope handling + redirect UX.
-   Tune in dev; watch false positives.
-3. **Optional reasoning display.** Only if a reasoning model is selected and
-   exposes thinking.
-4. **Production swap + re-validation.** Point config at Gemini/OpenAI,
-   re-validate the guardrail on the real model, provision rate limits for
-   expected headcount.
+**Status (2026-06-05): Phase 4 deferred — blocked on OpenAI API access.** Real
+Phase 4 hinges on re-running the guardrail eval against the **actual OpenAI API
+model**, and that cannot be faked on a free model: a free-model false-positive
+rate is just the dev-bench number again, so it proves nothing about production.
+Until OpenAI credit is added, stay on the **NVIDIA NIM dev engine** and do
+**model-agnostic work only**. Interim (in progress): the in-UI dummy-data
+reminder is pulled forward from Phase 5 as model-agnostic hardening.
+
+1. ✅ **DONE — Branded chat skeleton on NVIDIA.** Frontend, proxy, env-driven
+   provider config, streaming, the system prompt, the six step templates with
+   manual placeholders, one persistent session thread. Runs end-to-end on the
+   free tier.
+2. ✅ **DONE — Guardrail.** The input pre-check + permissive scope handling +
+   redirect UX. Tuned in dev; watch false positives.
+3. ⏸️ **DEFERRED into Phase 4 — Optional reasoning display.** Do NOT build now.
+   It is presentational only, its feasibility depends on which production model
+   is chosen, and the dev model is deliberately plain-instruct (exposes no
+   thinking). The reasoning-display decision is therefore made as part of Phase 4,
+   once the prod model is known.
+4. ⏸️ **DEFERRED (blocked on OpenAI API access) — Production swap + re-validation
+   (decisions locked below).** Point
+   config at **OpenAI**, re-validate the guardrail on the real model, and provision
+   the account tier for expected headcount. The **acceptance test** is re-running
+   the gated guardrail eval (`pytest -m eval`; metric = false-positive rate) on the
+   OpenAI model — the dev 0% FPR does **not** transfer. Also decide here whether the
+   chosen OpenAI model exposes reasoning and, if so, whether to add the optional
+   reasoning display (phase 3 above).
 5. **Polish.** Export the final Build prompt; session save/resume if wanted.
 
 Resist building more than the current phase. The boundaries exist to keep scope
 controlled and reviewable.
+
+### Phase 4 decisions (locked — not yet built)
+
+- **Provider: OpenAI**, via the OpenAI-compatible interface (see Provider/engine
+  above). Gemini is dropped. The swap is config only (`base_url` + `model` + key).
+- **Data posture: mock/dummy data only.** Participants never enter real sensitive
+  data, so **no zero-retention / enterprise agreement is required to launch.** Two
+  standing obligations: (1) keep the dummy-data instruction reinforced in the
+  participant-facing surface, and (2) confirm the OpenAI account does **not** train
+  on API data. Revisit this posture only if real data ever enters scope.
+- **Headcount & capacity:** ~50–70 participants typical, **100 max**, in groups of
+  5–7. Concurrency ~15–20, up to ~100 worst case. Each turn makes **two** model
+  calls (guardrail pre-check + facilitator), so size for **~300 requests/minute
+  peak**. **Check the OpenAI account tier early** — confirm the rate limit clears
+  300 rpm before a live workshop.
+- **Acceptance test:** re-run the gated guardrail eval on the OpenAI model. Guardrail
+  tuning does not transfer between engines; FPR must be re-measured on OpenAI.
