@@ -1,11 +1,10 @@
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { Logo } from '@/branding/Logo'
-import { PRODUCT_NAME, PRODUCT_TAGLINE } from '@/branding/branding'
 import { updateStep } from '@/api/chat'
 import { Composer } from '@/components/Composer'
 import { MessageList } from '@/components/MessageList'
+import { StartScreen } from '@/components/StartScreen'
 import { StepRail } from '@/components/StepRail'
 import { STEP_TEMPLATES } from '@/data/stepTemplates'
 import { useChatStream } from '@/hooks/useChatStream'
@@ -43,28 +42,11 @@ export function ChatWindow() {
 
   if (!sessionId) {
     return (
-      <div className="flex h-full items-center justify-center bg-bg p-6">
-        <div className="max-w-md text-center">
-          <div className="mb-6 flex justify-center">
-            <Logo markOnly className="scale-125" />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-fg">{PRODUCT_NAME}</h1>
-          <p className="mt-3 text-sm leading-relaxed text-fg-muted">{PRODUCT_TAGLINE}</p>
-          <button
-            type="button"
-            onClick={() => session.mutate()}
-            disabled={session.isPending}
-            className="mt-7 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-card transition hover:bg-accent-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
-          >
-            {session.isPending ? 'Starting…' : 'Begin session'}
-          </button>
-          {session.isError && (
-            <p role="alert" className="mt-4 text-sm text-danger">
-              Could not start a session. Please try again.
-            </p>
-          )}
-        </div>
-      </div>
+      <StartScreen
+        onBegin={() => session.mutate()}
+        isPending={session.isPending}
+        isError={session.isError}
+      />
     )
   }
 
