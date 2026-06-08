@@ -37,7 +37,7 @@ export function ChatWindow() {
     const text = draft.trim()
     if (!text) return
     setDraft('')
-    void chat.send(sessionId, text)
+    void chat.send(sessionId, text, currentStep)
   }
 
   if (!sessionId) {

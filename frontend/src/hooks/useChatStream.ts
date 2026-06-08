@@ -34,6 +34,9 @@ export function useChatStream() {
   const rafRef = useRef<number | null>(null)
   const runningRef = useRef(false)
   const doneRef = useRef(false)
+  // The step active when the in-flight turn was sent, stamped onto the finalized
+  // assistant message so the Build-step PRD can surface its export controls.
+  const sentStepRef = useRef<number | null>(null)
 
   const stopLoop = useCallback(() => {
     runningRef.current = false
@@ -53,7 +56,10 @@ export function useChatStream() {
     const full = targetRef.current
     setState((prev) => ({
       ...prev,
-      messages: [...prev.messages, { role: 'assistant', content: full }],
+      messages: [
+        ...prev.messages,
+        { role: 'assistant', content: full, step: sentStepRef.current ?? undefined },
+      ],
       streamingContent: null,
       isStreaming: false,
     }))
@@ -89,11 +95,12 @@ export function useChatStream() {
   )
 
   const send = useCallback(
-    async (sessionId: string, text: string): Promise<void> => {
+    async (sessionId: string, text: string, step: number): Promise<void> => {
       targetRef.current = ''
       shownRef.current = 0
       fracRef.current = 0
       doneRef.current = false
+      sentStepRef.current = step
 
       setState((prev) => ({
         ...prev,

@@ -1,8 +1,12 @@
+import { BuildActions } from '@/components/BuildActions'
 import { MessageBubble } from '@/components/MessageBubble'
 import { RedirectNotice } from '@/components/RedirectNotice'
 import { ThinkingIndicator } from '@/components/ThinkingIndicator'
 import { useAutoScroll } from '@/hooks/useAutoScroll'
 import type { Message } from '@/types/api'
+
+/** Zero-based index of the Build step, whose PRD output gets export controls. */
+const BUILD_STEP_INDEX = 5
 
 interface MessageListProps {
   messages: Message[]
@@ -39,13 +43,20 @@ export function MessageList({
           </div>
         )}
 
-        {messages.map((message, index) =>
-          message.redirect ? (
-            <RedirectNotice key={index} message={message.content} />
-          ) : (
-            <MessageBubble key={index} role={message.role} content={message.content} />
-          ),
-        )}
+        {messages.map((message, index) => {
+          if (message.redirect) {
+            return <RedirectNotice key={index} message={message.content} />
+          }
+          // The Build step (index 5) PRD is the workshop deliverable — surface
+          // copy/export controls on it alone, never on working-material steps.
+          const isBuildPrd = message.role === 'assistant' && message.step === BUILD_STEP_INDEX
+          return (
+            <div key={index} className="flex flex-col gap-1.5">
+              <MessageBubble role={message.role} content={message.content} />
+              {isBuildPrd && <BuildActions content={message.content} />}
+            </div>
+          )
+        })}
 
         {isThinking && <ThinkingIndicator />}
 

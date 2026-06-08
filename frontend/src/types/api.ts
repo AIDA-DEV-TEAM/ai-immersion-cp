@@ -15,6 +15,9 @@ export interface Message {
   content: string
   /** True when this assistant turn is a guardrail redirect, rendered as a notice. */
   redirect?: boolean
+  /** Zero-based step that produced this assistant turn; used to surface the
+   *  Build-step (index 5) export controls. */
+  step?: number
 }
 
 /** One event from the chat stream: a normal token, or a guardrail block. */
