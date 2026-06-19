@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { streamChat } from '@/api/chat'
+import { fetchSuggestions, streamChat } from '@/api/chat'
 import { ChatWindow } from '@/components/ChatWindow'
 import { DUMMY_DATA_REMINDER } from '@/components/DummyDataReminder'
 import { STEP_TEMPLATES } from '@/data/stepTemplates'
@@ -15,6 +15,8 @@ vi.mock('@/api/chat', () => ({
   createSession: vi.fn(async () => ({ session_id: 'test-session', step_index: 0 })),
   updateStep: vi.fn(async () => ({ session_id: 'test-session', step_index: 0 })),
   streamChat: vi.fn(),
+  // Default to no suggestions; individual tests override to exercise the buttons.
+  fetchSuggestions: vi.fn(async () => ({ suggestions: [] })),
 }))
 
 async function* streamOf(...events: StreamEvent[]): AsyncGenerator<StreamEvent> {
@@ -62,6 +64,110 @@ describe('ChatWindow', () => {
     const composer = await screen.findByRole('form', { name: /message composer/i })
     expect(within(composer).getByText(DUMMY_DATA_REMINDER)).toBeInTheDocument()
   })
+
+  // Streaming tests below drive the smoothed-reveal rAF loop, so they need a per-test
+  // timeout well above the 5s default under full-suite parallel load (slow CI env).
+  const STREAM_TIMEOUT = 15000
+
+  it('Continue advances the step and inserts the next template without sending', async () => {
+    const user = userEvent.setup()
+    vi.mocked(streamChat).mockReturnValue(streamOf({ type: 'token', value: 'Restated challenge.' }))
+    renderWithClient(<ChatWindow />)
+
+    await user.click(screen.getByRole('button', { name: /begin session/i }))
+    const textarea = await screen.findByLabelText(/your message/i)
+    await user.type(textarea, 'our framed challenge')
+    await user.click(screen.getByRole('button', { name: /^send$/i }))
+
+    // Once the Frame output finishes streaming (smoothed reveal + finalize), its
+    // Continue action appears — allow extra time for the animation loop to drain.
+    const continueButton = await screen.findByRole(
+      'button',
+      { name: /continue to widen/i },
+      { timeout: 8000 },
+    )
+    expect(vi.mocked(streamChat)).toHaveBeenCalledTimes(1)
+
+    await user.click(continueButton)
+
+    // Step advanced (Widen composer affordances) and the Widen template is inserted…
+    expect(screen.getByRole('button', { name: /insert widen template/i })).toBeInTheDocument()
+    await waitFor(() => expect(textarea).toHaveValue(STEP_TEMPLATES[1].template))
+    // …but nothing was sent — streamChat is not called a second time.
+    expect(vi.mocked(streamChat)).toHaveBeenCalledTimes(1)
+  }, STREAM_TIMEOUT)
+
+  it('inserts a clicked suggestion as a refine directive without sending', async () => {
+    const user = userEvent.setup()
+    vi.mocked(streamChat).mockReturnValue(streamOf({ type: 'token', value: 'Restated challenge.' }))
+    vi.mocked(fetchSuggestions).mockResolvedValue({
+      suggestions: ['Sharpen the success metric for the night-shift NOC engineer.'],
+    })
+    renderWithClient(<ChatWindow />)
+
+    await user.click(screen.getByRole('button', { name: /begin session/i }))
+    const textarea = await screen.findByLabelText(/your message/i)
+    await user.type(textarea, 'our framed challenge')
+    await user.click(screen.getByRole('button', { name: /^send$/i }))
+
+    // The suggestion is fetched only after the turn finishes and rendered as a button.
+    const suggestionButton = await screen.findByRole(
+      'button',
+      { name: /sharpen the success metric/i },
+      { timeout: 8000 },
+    )
+    expect(vi.mocked(fetchSuggestions)).toHaveBeenCalledTimes(1)
+
+    await user.click(suggestionButton)
+
+    // Clicking inserts a refine directive aimed at the prior output — but never sends it,
+    // so the model revises that step's output rather than answering a fresh request.
+    await waitFor(() =>
+      expect(textarea).toHaveValue(
+        'Refine your previous response to: Sharpen the success metric for the night-shift NOC engineer.',
+      ),
+    )
+    expect(vi.mocked(streamChat)).toHaveBeenCalledTimes(1)
+  }, STREAM_TIMEOUT)
+
+  it('shows a loading line while the suggestions call is in flight', async () => {
+    const user = userEvent.setup()
+    vi.mocked(streamChat).mockReturnValue(streamOf({ type: 'token', value: 'Restated challenge.' }))
+    // Never resolves — the suggestions query stays pending so the indicator persists.
+    vi.mocked(fetchSuggestions).mockReturnValue(new Promise(() => {}))
+    renderWithClient(<ChatWindow />)
+
+    await user.click(screen.getByRole('button', { name: /begin session/i }))
+    const textarea = await screen.findByLabelText(/your message/i)
+    await user.type(textarea, 'our framed challenge')
+    await user.click(screen.getByRole('button', { name: /^send$/i }))
+
+    // Continue/Refine are available immediately; the loading line sits in the
+    // suggestion spot while the separate call is in flight.
+    await screen.findByRole('button', { name: /continue to widen/i }, { timeout: 8000 })
+    expect(screen.getByText(/generating suggestions/i)).toBeInTheDocument()
+  }, STREAM_TIMEOUT)
+
+  it('renders no suggestion buttons when the suggestions call fails', async () => {
+    const user = userEvent.setup()
+    vi.mocked(streamChat).mockReturnValue(streamOf({ type: 'token', value: 'Restated challenge.' }))
+    vi.mocked(fetchSuggestions).mockRejectedValue(new Error('suggestions unavailable'))
+    renderWithClient(<ChatWindow />)
+
+    await user.click(screen.getByRole('button', { name: /begin session/i }))
+    const textarea = await screen.findByLabelText(/your message/i)
+    await user.type(textarea, 'our framed challenge')
+    await user.click(screen.getByRole('button', { name: /^send$/i }))
+
+    // The fixed Continue and Refine actions still appear — step output is unaffected.
+    await screen.findByRole('button', { name: /continue to widen/i }, { timeout: 8000 })
+    expect(screen.getByRole('button', { name: /refine this step/i })).toBeInTheDocument()
+    await waitFor(() => expect(vi.mocked(fetchSuggestions)).toHaveBeenCalledTimes(1))
+    // Fail-to-nothing: the loading line clears and no suggestion buttons remain.
+    await waitFor(() =>
+      expect(screen.queryByText(/generating suggestions/i)).not.toBeInTheDocument(),
+    )
+  }, STREAM_TIMEOUT)
 
   it('renders a guardrail block as a distinct redirect notice, not a chat bubble', async () => {
     const user = userEvent.setup()

@@ -76,13 +76,19 @@ export function StepRail({ steps, currentStep, onSelectStep }: StepRailProps) {
                     {isDone ? '✓' : step.step + 1}
                   </span>
                 </span>
-                <span
-                  className={cn(
-                    'whitespace-nowrap text-[11px] font-medium transition-colors md:text-sm',
-                    isCurrent ? 'text-fg' : isDone ? 'text-fg-muted' : 'text-fg-muted/70',
-                  )}
-                >
-                  {step.name}
+                <span className="flex min-w-0 flex-col md:gap-0.5">
+                  <span
+                    className={cn(
+                      'whitespace-nowrap text-[11px] font-medium transition-colors md:text-sm',
+                      isCurrent ? 'text-fg' : isDone ? 'text-fg-muted' : 'text-fg-muted/70',
+                    )}
+                  >
+                    {step.name}
+                  </span>
+                  {/* Descriptor orients first-time users; desktop-only so the mobile row stays compact. */}
+                  <span className="hidden text-xs leading-tight text-fg-muted md:block">
+                    {step.descriptor}
+                  </span>
                 </span>
               </button>
             </li>

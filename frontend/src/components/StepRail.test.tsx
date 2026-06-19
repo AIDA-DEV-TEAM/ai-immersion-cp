@@ -14,6 +14,14 @@ describe('StepRail', () => {
     }
   })
 
+  it('renders a descriptor under every step name', () => {
+    render(<StepRail steps={STEP_TEMPLATES} currentStep={0} onSelectStep={() => {}} />)
+
+    for (const step of STEP_TEMPLATES) {
+      expect(screen.getByText(step.descriptor)).toBeInTheDocument()
+    }
+  })
+
   it('marks only the current step with aria-current="step" (guardrail anchoring)', () => {
     render(<StepRail steps={STEP_TEMPLATES} currentStep={2} onSelectStep={() => {}} />)
 

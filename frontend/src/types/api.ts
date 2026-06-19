@@ -25,10 +25,17 @@ export type StreamEvent =
   | { type: 'token'; value: string }
   | { type: 'blocked'; message: string }
 
+/** 1-2 model-generated next-action suggestions for a completed step's output. */
+export interface SuggestionsResponse {
+  suggestions: string[]
+}
+
 export interface StepTemplate {
   /** Zero-based step index (0 = Frame … 5 = Build). */
   step: number
   name: string
+  /** One-line muted descriptor of what this step does (rail + step header). */
+  descriptor: string
   /** Verbatim participant-facing template; [bracketed] blanks are filled by the participant. */
   template: string
 }

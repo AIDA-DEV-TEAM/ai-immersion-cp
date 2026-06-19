@@ -6,8 +6,14 @@ from collections.abc import AsyncIterator
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 
-from app.schemas.chat import ChatRequest, SessionResponse, StepUpdateRequest
-from app.services import chat_service, guardrail_service, session_store
+from app.schemas.chat import (
+    ChatRequest,
+    SessionResponse,
+    StepUpdateRequest,
+    SuggestionsRequest,
+)
+from app.schemas.suggestions import SuggestionList
+from app.services import chat_service, guardrail_service, session_store, suggestions_service
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
@@ -62,3 +68,14 @@ async def update_step(request: StepUpdateRequest) -> SessionResponse:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
     session_store.set_step(request.session_id, request.step_index)
     return SessionResponse(session_id=session.id, step_index=request.step_index)
+
+
+@router.post("/suggestions", response_model=SuggestionList)
+async def suggestions(request: SuggestionsRequest) -> SuggestionList:
+    session = session_store.get_session(request.session_id)
+    if session is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    # Fails open to nothing inside the service: an empty list renders no buttons.
+    return await suggestions_service.suggest(
+        guardrail_service.step_name(request.step_index), request.assistant_message
+    )

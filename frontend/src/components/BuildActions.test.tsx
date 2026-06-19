@@ -9,7 +9,12 @@ const baseProps = {
   streamingContent: null,
   isStreaming: false,
   error: null,
-  currentStepName: 'Build',
+  currentStep: 5,
+  onContinue: () => {},
+  onRefine: () => {},
+  suggestions: [],
+  suggestionsLoading: false,
+  onSelectSuggestion: () => {},
 }
 
 function renderMessages(messages: Message[]) {

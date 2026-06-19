@@ -23,3 +23,11 @@ class StepUpdateRequest(BaseModel):
 
     session_id: str
     step_index: int = Field(ge=0, le=5)
+
+
+class SuggestionsRequest(BaseModel):
+    """Asks for next-action suggestions on a completed step's assistant output."""
+
+    session_id: str
+    step_index: int = Field(ge=0, le=5)
+    assistant_message: str = Field(min_length=1)

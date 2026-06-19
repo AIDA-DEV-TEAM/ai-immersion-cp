@@ -1,8 +1,7 @@
 /** Standing data-posture reminder. Persistent and non-dismissible by design — it
  *  must still be visible deep into a session, so it is part of the always-rendered
  *  composer, not a toast or a closeable banner. */
-export const DUMMY_DATA_REMINDER =
-  'Use dummy/mock data only — do not enter real client information.'
+export const DUMMY_DATA_REMINDER = "Do not enter real client information.";
 
 export function DummyDataReminder() {
   return (
@@ -12,5 +11,5 @@ export function DummyDataReminder() {
     >
       {DUMMY_DATA_REMINDER}
     </p>
-  )
+  );
 }

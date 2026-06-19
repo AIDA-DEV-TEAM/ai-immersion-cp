@@ -17,7 +17,16 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # Provider — OpenAI-compatible lingua franca. Dev defaults target NVIDIA NIM.
+    # Which LangChain provider integration to use (passed to init_chat_model as
+    # model_provider). Common values: "openai", "anthropic", "google_genai",
+    # "bedrock", "azure_ai" — see init_chat_model's error for the full supported
+    # list. "openai" + a non-empty provider_base_url targets any OpenAI-compatible
+    # endpoint (dev = NVIDIA NIM); native providers leave provider_base_url empty.
+    provider: str = Field(default="openai")
+
+    # Endpoint for OpenAI-compatible providers. Dev defaults target NVIDIA NIM.
+    # Leave empty for native providers (anthropic, google_genai, ...) so the client
+    # uses its own default endpoint.
     provider_base_url: str = Field(default="https://integrate.api.nvidia.com/v1")
     provider_model: str = Field(default="meta/llama-3.1-70b-instruct")
     provider_api_key: str = Field(default="")
@@ -28,6 +37,12 @@ class Settings(BaseSettings):
     # could not be confirmed available on the free tier — point this at a smaller
     # model (e.g. an 8b instruct) once you've verified it on your key.
     guardrail_model: str = Field(default="meta/llama-3.1-70b-instruct")
+
+    # Next-action suggestions model. Like the guardrail, this is a cheap, non-streaming
+    # call that runs after a step finishes — keep it fast so it never delays the step
+    # output. Its own config string so prod can pick a smaller model; reuses
+    # provider_base_url + key. Defaults to the facilitator model (a known-good id).
+    suggestions_model: str = Field(default="meta/llama-3.1-70b-instruct")
 
     # Build-time branding, substituted into the system prompt.
     brand_name: str = Field(default="Acme")

@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/client'
-import type { SessionResponse, StreamEvent } from '@/types/api'
+import type { SessionResponse, StreamEvent, SuggestionsResponse } from '@/types/api'
 
 export async function createSession(): Promise<SessionResponse> {
   const { data } = await apiClient.post<SessionResponse>('/session')
@@ -10,6 +10,24 @@ export async function updateStep(sessionId: string, stepIndex: number): Promise<
   const { data } = await apiClient.post<SessionResponse>('/step', {
     session_id: sessionId,
     step_index: stepIndex,
+  })
+  return data
+}
+
+/**
+ * Fetch 1-2 next-action suggestions for a completed step's assistant output.
+ * Separate, non-streaming call made after the turn finishes — never blocks the
+ * stream. The backend fails open to an empty list, so the caller renders nothing.
+ */
+export async function fetchSuggestions(
+  sessionId: string,
+  stepIndex: number,
+  assistantMessage: string,
+): Promise<SuggestionsResponse> {
+  const { data } = await apiClient.post<SuggestionsResponse>('/suggestions', {
+    session_id: sessionId,
+    step_index: stepIndex,
+    assistant_message: assistantMessage,
   })
   return data
 }

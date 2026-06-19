@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react'
+import { useEffect } from 'react'
+import type { ChangeEvent, FormEvent, KeyboardEvent, RefObject } from 'react'
 
 import { DummyDataReminder } from '@/components/DummyDataReminder'
 import { TemplateInsert } from '@/components/TemplateInsert'
@@ -11,6 +11,10 @@ interface ComposerProps {
   onInsertTemplate: () => void
   currentStepName: string
   disabled: boolean
+  /** Owned by the parent so the Refine action can focus the composer. */
+  inputRef: RefObject<HTMLTextAreaElement>
+  /** Overrides the default step-template hint (used by the Refine action). */
+  placeholder?: string
 }
 
 const MAX_TEXTAREA_HEIGHT_PX = 160
@@ -22,16 +26,16 @@ export function Composer({
   onInsertTemplate,
   currentStepName,
   disabled,
+  inputRef,
+  placeholder,
 }: ComposerProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
   // Auto-grow: size the textarea to its content, capped, then scroll past the cap.
   useEffect(() => {
-    const el = textareaRef.current
+    const el = inputRef.current
     if (!el) return
     el.style.height = 'auto'
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT_PX)}px`
-  }, [draft])
+  }, [draft, inputRef])
 
   const canSend = !disabled && draft.trim().length > 0
 
@@ -55,11 +59,11 @@ export function Composer({
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-border bg-surface p-4"
+      className="border-t border-border bg-surface p-5 md:p-6"
       aria-label="Message composer"
     >
       <DummyDataReminder />
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <TemplateInsert stepName={currentStepName} onInsert={onInsertTemplate} disabled={disabled} />
       </div>
       <label htmlFor="composer-input" className="sr-only">
@@ -67,15 +71,17 @@ export function Composer({
       </label>
       <textarea
         id="composer-input"
-        ref={textareaRef}
+        ref={inputRef}
         value={draft}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         rows={1}
-        placeholder={`Insert the ${currentStepName} template, fill the [blanks], then send.`}
+        placeholder={
+          placeholder ?? `Insert the ${currentStepName} template, fill the [blanks], then send.`
+        }
         className="block max-h-[160px] w-full resize-none overflow-y-auto rounded-lg border border-border bg-surface p-3 text-sm text-fg placeholder:text-fg-muted focus:border-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       />
-      <div className="mt-2 flex justify-end">
+      <div className="mt-3 flex justify-end">
         <button
           type="submit"
           disabled={!canSend}

@@ -104,7 +104,8 @@ export function useChatStream() {
 
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, { role: 'user', content: text }],
+        // Stamp the step so the message list can mark where each step's section begins.
+        messages: [...prev.messages, { role: 'user', content: text, step }],
         streamingContent: '',
         isStreaming: true,
         error: null,
