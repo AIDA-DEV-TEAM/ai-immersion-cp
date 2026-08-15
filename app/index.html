@@ -327,6 +327,10 @@
         white-space: pre-line;
       }
 
+      .placeholder {
+        font-style: italic;
+      }
+
       .hub {
         min-height: calc(100vh - 110px);
         display: grid;
@@ -657,8 +661,10 @@
               <div class="deep-research-prompt">
                 <button class="copy-button" id="copy-deep-research" type="button">Copy</button>
                 <h3>Prompt:</h3>
-                <p id="deep-research-prompt-copy">I am part of the [Department/Business unit] at [organization name]. I want to conduct deep research for my department. Help me compose a deep research prompt which will help me get a sense of the customer and company snapshot, the AI investments, the broader challenges and AI opportunities for the company. I want the report to be tailored to my specific needs. Here is some context specific to me: [Participants add more context/information specific to their domain]</p>
-                <p><strong><em id="deep-research-prompt-instruction">Just return the prompt don't run the research.</em></strong></p>
+                <p id="deep-research-prompt-copy">I am part of the <em class="placeholder">[Department/Business Unit]</em> at <em class="placeholder">[Organization Name]</em>, and I want to conduct deep research into business challenge I am facing.
+                Help me understand the broader context of this challenge, including its key drivers, how similar challenges are being addressed, and where AI could help solve or improve the problem.
+                I want the research to be tailored to my specific role, business context, and needs, rather than providing generic insights.
+                Here is some context about my situation: <em class="placeholder">[Participants: Add relevant context, details, constraints, existing processes, tools, stakeholders, or other information specific to your domain.]</em></p>
               </div>
             </article>
 
@@ -728,17 +734,17 @@
         {
           step: 2,
           label: "Diagnose",
-          text: "Let's pick the [top pain-point] for this challenge. For this pain, run a Five Whys.\n\nPropose 3 root-cause hypotheses and the disproof evidence for each. Specify the minimum data cut and owners to pull.\n\nOutput a root-cause map, test plan, and privacy constraints."
+          text: "Let's pick the [top pain-point] for this challenge. For this pain, run a Five Whys.\n\nPropose 3 root-cause hypotheses and the disproof evidence for each. Specify the minimum data cut and owners to pull.\n\nOutput a root-cause map, and privacy constraints."
         },
         {
           step: 3,
           label: "Ideate",
-          text: "Generate and cluster possible AI driven ideas into 3 options:\n1. Process: policy and ways of working\n2. Analytics/ML: forecast, optimise, recommend\n3. AI and Automation: computer vision, retrieval augmented generation, agentic AI, etc.\n\nScore each on Impact x Feasibility x Confidence x Time-to-Value. Recommend one pilot with the smallest integration surface and clearest value proof."
+          text: "Generate and cluster possible AI driven ideas into 3 options:\n1. Process: policy and ways of working(rule based)\n2. Analytics/ML: forecast, optimise, recommend\n3. AI and Automation: computer vision, retrieval augmented generation, generative AI, agentic AI, etc.\n\nScore each on Impact x Feasibility x Confidence x Time-to-Value. Recommend one pilot with the smallest integration surface and clearest value proof."
         },
         {
           step: 4,
           label: "Brief",
-          text: "For the recommended pilot, create a pilot brief including: target users, problem statement, success metrics and baselines, target uplift, key flow in 5-7 steps, screens/components, sample UI copy, representative sample data, integration points, and relevant guardrails such as regulation boundaries, bias tests, and fallback behaviour."
+          text: "For the recommended pilot, create a pilot brief including: target users, problem statement, success metrics and baselines, key flow in 5-7 steps, screens/components, sample UI copy, representative sample data, integration points, and relevant guardrails such as regulation boundaries, bias tests, and fallback behaviour."
         },
         {
           step: 5,
@@ -767,7 +773,7 @@
       const frameworkModal = document.querySelector("#framework-modal");
       const cardModal = document.querySelector("#card-modal");
       const cardDetail = document.querySelector("#card-detail");
-      const deepResearchPrompt = `${document.querySelector("#deep-research-prompt-copy").textContent}\n\n${document.querySelector("#deep-research-prompt-instruction").textContent}`;
+      const deepResearchPrompt = document.querySelector("#deep-research-prompt-copy").textContent.trim();
 
       async function copyText(text) {
         if (navigator.clipboard && window.isSecureContext) {
@@ -782,8 +788,12 @@
         textarea.style.opacity = "0";
         document.body.appendChild(textarea);
         textarea.select();
-        document.execCommand("copy");
+        const copied = document.execCommand("copy");
         document.body.removeChild(textarea);
+
+        if (!copied) {
+          throw new Error("The browser could not copy the text.");
+        }
       }
 
       function writeClipboard(text, button) {
@@ -813,6 +823,22 @@
         });
       }
 
+      function renderPromptText(element, text) {
+        const placeholders = /\[[^\]]+\]/g;
+        let lastIndex = 0;
+
+        for (const match of text.matchAll(placeholders)) {
+          element.append(text.slice(lastIndex, match.index));
+          const placeholder = document.createElement("em");
+          placeholder.className = "placeholder";
+          placeholder.textContent = match[0];
+          element.appendChild(placeholder);
+          lastIndex = match.index + match[0].length;
+        }
+
+        element.append(text.slice(lastIndex));
+      }
+
       prompts.forEach((prompt) => {
         const card = document.createElement("article");
         card.className = "prompt-card";
@@ -826,7 +852,7 @@
           </div>
           <p class="prompt-text"></p>
         `;
-        card.querySelector(".prompt-text").textContent = prompt.text;
+        renderPromptText(card.querySelector(".prompt-text"), prompt.text);
         card.querySelector(".copy-button").addEventListener("click", (event) => {
           writeClipboard(prompt.text, event.currentTarget);
         });
