@@ -392,40 +392,74 @@
 
       .challenge-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
       }
 
       .challenge-card {
-        min-height: 132px;
+        min-height: 120px;
         position: relative;
-        padding: 18px;
+        padding: 20px;
         cursor: pointer;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+      }
+
+      .challenge-card:hover {
+        border-color: #a5b4fc;
+        box-shadow: 0 4px 12px rgba(15, 103, 177, 0.08);
+      }
+
+      .challenge-card-icon {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(15, 103, 177, 0.08);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .challenge-card-body {
+        flex: 1;
+        min-width: 0;
+        padding-right: 48px;
       }
 
       .challenge-card small {
         display: block;
-        max-width: calc(100% - 72px);
-        color: #2c3546;
+        color: var(--muted-text);
         text-transform: uppercase;
         font-size: 11px;
         font-weight: 850;
         letter-spacing: 0.04em;
+        margin-bottom: 4px;
       }
 
       .challenge-card h3 {
-        margin: 10px 0 0;
-        color: var(--primary);
-        font-size: 15px;
-        line-height: 1.28;
+        margin: 0;
+        color: var(--foreground);
+        font-size: 16px;
+        line-height: 1.3;
         font-weight: 800;
-        letter-spacing: 0;
+        letter-spacing: -0.01em;
+      }
+
+      .challenge-card p {
+        margin: 6px 0 0;
+        color: var(--muted-text);
+        font-size: 13.5px;
+        line-height: 1.55;
       }
 
       .challenge-card .copy-button {
         position: absolute;
-        top: 12px;
-        right: 12px;
+        top: 16px;
+        right: 16px;
         min-height: 28px;
       }
 
@@ -581,10 +615,6 @@
 
         .framework-panel {
           min-height: 420px;
-        }
-
-        .challenge-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
         .side-panel {
@@ -754,18 +784,26 @@
       ];
 
       const challenges = [
-        "ThinScore: Bureau-Free Credit for Invisible Millions",
-        "Farm-to-Fork-to-Finance Agritech Credit",
-        "Real-Time Voice Translator",
-        "Automated Household Conversion",
-        "Scam to Closure: Agentic Victim Resolution",
-        "AI Procurement Intelligence",
-        "Post-Merger Customer Experience Still Feels Like Two Companies",
-        "Network Incidents Take Too Long to Detect, Diagnose and Resolve",
-        "Fraud and Scam Losses Outpace Control Updates",
-        "Retail Demand and Waste Decisions Happen in Fragmented Loops",
-        "Enterprise Sales Cycles Stall Translating Customer Pain into Solutions",
-        "Workforce AI Training Is Happening but Cycle-Time Gains Are Unmeasured"
+        {
+          title: "Clinical Protocol Copilot",
+          desc: "Ask questions over approved SOPs, clinical guidelines and emergency protocols."
+        },
+        {
+          title: "Nurse Notes Copilot",
+          desc: "Convert voice and shift observations into structured nursing notes and summaries."
+        },
+        {
+          title: "Smart Discharge Assistant",
+          desc: "Generate patient-friendly discharge packs, medication instructions and follow-up guidance."
+        },
+        {
+          title: "Predictive Bed Intelligence",
+          desc: "Forecast occupancy, predicted discharges, ICU demand and bottlenecks."
+        },
+        {
+          title: "Smart OPD Assistant",
+          desc: "Pre-consultation, routing, appointment guidance and reduced waiting friction."
+        }
       ];
 
       const promptList = document.querySelector("#prompt-list");
@@ -859,27 +897,41 @@
         promptList.appendChild(card);
       });
 
-      challenges.forEach((name, index) => {
+      challenges.forEach((challenge, index) => {
         const card = document.createElement("article");
         card.className = "challenge-card";
         card.innerHTML = `
+          <div class="challenge-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <line x1="10" y1="9" x2="8" y2="9"></line>
+            </svg>
+          </div>
+          <div class="challenge-card-body">
+            <small>Challenge Card ${index + 1}</small>
+            <h3>${challenge.title}</h3>
+            <p>${challenge.desc}</p>
+          </div>
           <button class="copy-button" type="button">Copy</button>
-          <small>Challenge Card ${index + 1}</small>
-          <h3>${name}</h3>
         `;
         card.addEventListener("click", () => {
           cardDetail.innerHTML = `
             <small>Challenge Card ${index + 1}</small>
-            <h2>${name}</h2>
+            <h2>${challenge.title}</h2>
+            <p>${challenge.desc}</p>
+            <hr style="margin: 16px 0; border: 0; border-top: 1px solid var(--border);" />
             <p><strong>Problem frame:</strong> Teams need to understand the user pain, operational friction, data available, and measurable success criteria before choosing a GenAI intervention.</p>
-            <p><strong>Prompt starter:</strong> Act as a research aide for "${name}". Identify personas, pains, workarounds, risks, and the smallest pilot that can prove business value.</p>
+            <p><strong>Prompt starter:</strong> Act as a research aide for "${challenge.title}". Identify personas, pains, workarounds, risks, and the smallest pilot that can prove business value.</p>
           `;
           cardModal.classList.add("active");
           cardModal.setAttribute("aria-hidden", "false");
         });
         card.querySelector(".copy-button").addEventListener("click", (event) => {
           event.stopPropagation();
-          writeClipboard(name, event.currentTarget);
+          writeClipboard(`${challenge.title}: ${challenge.desc}`, event.currentTarget);
         });
         challengeList.appendChild(card);
       });
